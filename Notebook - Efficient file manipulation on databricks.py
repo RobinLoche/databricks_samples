@@ -31,7 +31,7 @@ def pathWithoutDBFS(path: str):
 
 # COMMAND ----------
 
-def fileExists(path: str):
+def pathExists(path: str):
   """Function that test if a file (or a folder) exists"""
   return os.path.exists(pathWithDBFS(path))
 
@@ -45,7 +45,7 @@ def listFolders(path):
     Return:
       list of string: the list of names of the folder inside the given path, or None if the folder doesn't exists
   """
-  if not fileExists(path):
+  if not pathExists(path):
     return None
 
   folder_list = []
@@ -63,7 +63,7 @@ def listFiles(path):
     Return:
       list of string: the list of names of the files inside the given path, or None if the folder doesn't exists
   """
-  if not fileExists(path):
+  if not pathExists(path):
     return None
   file_list = []
   for (dirpath, dirnames, filenames) in walk(pathWithDBFS(path)):
@@ -196,6 +196,22 @@ res = FolderScanner("/dbfs/databricks-datasets/Rdatasets")
 
 # COMMAND ----------
 
+def moveFolder(src_path, dest_path, overwrite = False, verbose = True):
+  """Function to move a folder or a file from a source to a destination"""
+  verboseprint = print if verbose else lambda *a, **k: None
+  if not pathExists(pathWithDBFS(src_path)):
+    raise FileNotFoundError("Path " + src_path + " does not exists.")
+  if pathExists(pathWithDBFS(dest_path)):
+    if overwrite:
+      verboseprint("Destination folder already exists, deleting it...")
+      dbutils.fs.rm(pathWithoutDBFS(dest_path), recurse = True)
+    else:
+      raise FileExistsError("Path " + dest_path + " already exists.")
+  verboseprint("Copy the folder...")
+  shutil.move(pathWithDBFS(src_path), pathWithDBFS(dest_path))
+
+# COMMAND ----------
+
 # code adapted from https://github.com/ikonikon/fast-copy/blob/master/fast-copy.py
 class FastCopy:
   file_queue = queue.Queue()
@@ -274,3 +290,6 @@ FastCopy("/dbfs/databricks-datasets/Rdatasets", "/FileStore/test/")
 
 # MAGIC %fs ls /FileStore/test
 
+# COMMAND ----------
+
+dbutils.fs.cp("/databricks-datasets/Rdatasets", "/FileStore/test/", recurse = True)
