@@ -61,7 +61,7 @@ def listFiles(path):
     Parameters:
       path (string): the path of the folder to get the descendants of
     Return:
-      list of string: the list of names of the folder inside the given path, or None if the folder doesn't exists
+      list of string: the list of names of the files inside the given path, or None if the folder doesn't exists
   """
   if not fileExists(path):
     return None
