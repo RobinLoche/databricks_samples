@@ -196,16 +196,6 @@ res = FolderScanner("/dbfs/databricks-datasets/Rdatasets")
 
 # COMMAND ----------
 
-# 6-7s on explorer
-res = FolderScanner("/dbfs/mnt/datawarehouse/analytics_small")
-
-# COMMAND ----------
-
-# 46s on explorer -> 100s / 8 cores or 55s / 16 cores
-res = FolderScanner("/dbfs/mnt/datawarehouse/analytics_medium")
-
-# COMMAND ----------
-
 # code adapted from https://github.com/ikonikon/fast-copy/blob/master/fast-copy.py
 class FastCopy:
   file_queue = queue.Queue()
