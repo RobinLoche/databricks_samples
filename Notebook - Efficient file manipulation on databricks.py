@@ -145,7 +145,7 @@ sizeByteToHuman(folderSize("/databricks-datasets/airlines"))
 
 class FolderScanner:
   """
-  Class 
+  Class that compute the size of a folder by scanning each subfolder in a different sub-process. Once initialized (my_scan = FolderScanner(path)), you can get the folder size by accessing the attribut "total" (my_scan.total).
   """
   element_queue = queue.Queue()
   nb_cpu = mp.cpu_count()
