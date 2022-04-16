@@ -218,9 +218,11 @@ class FastCopy:
   file_queue = queue.Queue()
   total_files = 0
   copy_count = 0
-  lock = threading.Lock()
+  lock_bar = threading.Lock()
+  lock_folder = threading.Lock()
   progress_bar = None
   validate = False
+  running = False
 
   def __init__(self, src_dir: str, dest_dir: str, validate: bool = False):
     self.validate = validate
@@ -245,31 +247,41 @@ class FastCopy:
     self.dispatch_workers(file_list)
 
   def single_copy(self):
-    while True:
-      file = self.file_queue.get()
+    while self.running:
+      try:
+        # Get with a timeout to check self.running every seconds
+        file = self.file_queue.get(timeout = 1)
+      except:
+        continue
+      # If no except we got a file
       dest = self.dest_dir + file[len(self.src_dir):]
       dest_folder = os.path.split(dest)[0]
-      res = Path(dest_folder + "/").mkdir(parents = True, exist_ok = True)
+      if not pathExists(dest_folder):
+        with self.lock_folder:
+          res = Path(dest_folder + "/").mkdir(parents = True, exist_ok = True)
       try:
         res = shutil.copyfile(file, dest)
       except:
         print("Error while copying " + file + " to " + dest)
         raise
       self.file_queue.task_done()
-      with self.lock:
+      with self.lock_bar:
         self.progress_bar.update(1)
 
   def dispatch_workers(self, file_list: List[str]):
     n_threads = 16
+    self.running = True
     for i in range(n_threads):
       t = threading.Thread(target=self.single_copy)
       t.daemon = True
       t.start()
-    print('{} copy deamons started.'.format(16))
+    print('{} copy deamons started.'.format(n_threads))
     self.progress_bar = tqdm(total=self.total_files, position=0, leave=True)
     for file_name in file_list:
       self.file_queue.put(file_name)
     self.file_queue.join()
+    self.running = False
+    time.sleep(1) # Wait a little just to be sure to update the progress bar and stop the threads
     self.progress_bar.close()
     # Validate
     if self.validate:
